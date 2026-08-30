@@ -1,0 +1,23 @@
+# ==============================================================================
+# Python Dependencies for Inventory CV Pipeline
+# ==============================================================================
+# Computer Vision framework for YOLO object detection
+ultralytics>=8.2.0
+
+# Roboflow SDK for dataset downloading
+roboflow>=1.1.0
+
+# OpenCV for webcam capture and real-time video processing
+opencv-python>=4.9.0
+
+# Image handling utilities
+pillow>=10.0.0
+
+# Numerical computing
+numpy>=1.24.0
+
+# Environment variable loading
+python-dotenv>=1.0.0
+
+# Required as a dependency for Ultralytics model export
+tensorflow>=2.15.0

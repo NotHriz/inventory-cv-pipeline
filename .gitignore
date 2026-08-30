@@ -1,0 +1,43 @@
+# Virtual environments
+
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+
+# IDE configurations
+.vscode/
+.idea/
+
+# Python bytecode and cache
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# Dataset and training artifacts
+# Ignore the contents of the dataset directory but keep the placeholder file.
+dataset/*
+!dataset/.gitkeep
+
+# Training output runs (Ultralytics logs/weights)
+runs/
+
+# Model weights and exports
+# Ignore trained weights and saved-model directories but keep the placeholder.
+models/*.pt
+models/*_saved_model/
+!models/.gitkeep
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
