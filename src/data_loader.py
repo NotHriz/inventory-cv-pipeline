@@ -119,8 +119,16 @@ def download_dataset() -> str:
 
         # `location` returns the absolute path to the directory containing the
         # downloaded dataset files.
-        download_result = version.download(model_format="yolov8", location=str(config.DATASET_DIR))
-
+        # NOTE: `overwrite=True` is critical. If the `location` directory already
+        # exists and overwrite is disabled (the SDK default), Roboflow returns a
+        # stub Dataset object WITHOUT downloading any files, leaving the target
+        # directory empty. Cleaning the directory beforehand is not sufficient
+        # because the directory still exists (it is re-created by the cleanup).
+        download_result = version.download(
+            model_format="yolov8",
+            location=str(config.DATASET_DIR),
+            overwrite=True,
+        )
         if isinstance(download_result, str):
             dataset_dir = Path(download_result)
         else:
@@ -149,3 +157,4 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
     path = download_dataset()
     print(f"data.yaml located at: {path}")
+

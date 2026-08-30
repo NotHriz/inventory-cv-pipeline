@@ -1,0 +1,11 @@
+[INFO] upload_when_ready: ======================================================================
+[INFO] upload_when_ready: Model upload watcher started
+[INFO] upload_when_ready: ======================================================================
+[INFO] upload_when_ready: Watching for: C:\Users\Mukhriz\Documents\PetroScience Challange\inventory-cv-pipeline\models\inventory_model.tflite
+[INFO] upload_when_ready: Upload method: local
+[INFO] upload_when_ready: Poll interval: 30s | Max wait: 0s (0=forever)
+[INFO] upload_when_ready: Model not present yet (waited 0 s). Still training?
+[INFO] upload_when_ready: Model not present yet (waited 30 s). Still training?
+[INFO] upload_when_ready: Model not present yet (waited 60 s). Still training?
+[INFO] upload_when_ready: Model not present yet (waited 90 s). Still training?
+[INFO] upload_when_ready: Model not present yet (waited 120 s). Still training?

@@ -57,12 +57,15 @@ def main() -> None:
         logger.info("Exported TFLite model located at: %s", exported_model)
         logger.info("=" * 70)
 
-    except EnvironmentError as exc:
-        logger.error("Configuration error: %s", exc)
-        logger.error("Fix: copy `.env.example` to `.env` and set credentials.")
-        sys.exit(1)
     except FileNotFoundError as exc:
         logger.error("File error: %s", exc)
+        logger.error("The dataset may not have downloaded correctly, or a required "
+                     "file is missing.")
+        sys.exit(1)
+    except EnvironmentError as exc:
+        logger.error("Configuration error: %s", exc)
+        logger.error("Fix: copy `.env.example` to `.env` and fill in your Roboflow "
+                     "credentials.")
         sys.exit(1)
     except RuntimeError as exc:
         logger.error("Pipeline failure: %s", exc)
@@ -74,3 +77,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
