@@ -32,13 +32,21 @@ def _detect_device() -> str:
     """
     Detect and return the best available compute device.
 
+    This explicitly enforces GPU usage when a CUDA-capable GPU is present and
+    emits a clear warning if the runtime falls back to CPU.
+
     Returns:
         str: Either `0` (CUDA GPU) or `cpu`.
     """
     if torch.cuda.is_available():
         logger.info("CUDA GPU detected. Training on device `0` (GPU).")
         return "0"
-    logger.info("CUDA not available. Falling back to CPU training.")
+
+    logger.warning(
+        "PyTorch did NOT detect a CUDA GPU. Falling back to CPU training - "
+        "this will be significantly slower. Verify your GPU drivers, CUDA "
+        "toolkit, and a PyTorch build with CUDA support are installed."
+    )
     return "cpu"
 
 
@@ -48,6 +56,12 @@ def _resolve_export_format(model: YOLO) -> tuple[str, Path]:
 
     The `litert` format is the modern alias for TFLite in recent Ultralytics
     releases; we attempt `tflite` first, then fall back to `litert`.
+
+    Note:
+        The ``nms`` argument is intentionally omitted from ``model.export()``
+        because it is not supported for the ``litert`` format and would raise
+        ``ArgumentError`` (``argument 'nms' is not supported for
+        format='litert'``). Only ``imgsz`` is passed to the exporter.
 
     Args:
         model: The trained YOLO model instance.
@@ -59,15 +73,16 @@ def _resolve_export_format(model: YOLO) -> tuple[str, Path]:
     Raises:
         RuntimeError: If both `tflite` and `litert` export attempts fail.
     """
-    export_formats: list[tuple[str, str]] = [
-        ("tflite", ".tflite"),
-        ("litert", ".tflite"),
-    ]
+    export_formats: list[str] = ["tflite", "litert"]
 
-    for fmt, _extension in export_formats:
+    for fmt in export_formats:
         try:
             logger.info("Attempting export using format='%s'...", fmt)
-            export_result = model.export(format=fmt, imgsz=config.IMAGE_SIZE, nms=True)
+            # NOTE: `nms` is intentionally NOT passed here. It is unsupported
+            # for the `litert` format and would raise `ArgumentError`
+            # ("argument 'nms' is not supported for format='litert'"). Only the
+            # image size is passed to the exporter.
+            export_result = model.export(format=fmt, imgsz=config.IMAGE_SIZE)
 
             # The export method returns the path string to the exported file.
             exported_file = Path(str(export_result))
@@ -160,18 +175,23 @@ def run_training_and_export(
     # 4. Train the model
     # -------------------------------------------------------------------------
     logger.info(
-        "Training configuration -> epochs=%d, imgsz=%d, device=%s",
-        config.EPOCHS,
+        "Training configuration -> max_epochs=%d, patience=%d, imgsz=%d, "
+        "device=%s, val=%s",
+        config.MAX_EPOCHS,
+        config.PATIENCE,
         config.IMAGE_SIZE,
         device,
+        True,
     )
 
     try:
         results = model.train(
             data=str(data_yaml),
-            epochs=config.EPOCHS,
+            epochs=config.MAX_EPOCHS,      # upper ceiling; early stop may cut short
+            patience=config.PATIENCE,      # stop if no val improvement for N epochs
             imgsz=config.IMAGE_SIZE,
             device=device,
+            val=True,                      # compute validation metrics each epoch
             project="runs",
             name="inventory_train",
             exist_ok=True,
