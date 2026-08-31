@@ -79,7 +79,7 @@ DATASET_DIR: Path = BASE_DIR / "dataset"
 MODELS_DIR: Path = BASE_DIR / "models"
 
 # Absolute path to the exported TFLite model file (edge deployment artifact).
-EXPORTED_TFLITE_PATH: Path = MODELS_DIR / "inventory_model.tflite"
+EXPORTED_TFLITE_PATH: Path = MODELS_DIR / "best_float16.tflite"
 
 # Ensure the required directories exist at import time to avoid path errors
 # elsewhere in the application.
