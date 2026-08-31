@@ -55,6 +55,20 @@ IMAGE_SIZE: int = int(os.getenv("IMAGE_SIZE", "640"))
 # Minimum confidence threshold for detections during inference.
 CONFIDENCE_THRESHOLD: float = float(os.getenv("CONFIDENCE_THRESHOLD", "0.40"))
 
+# When ``True``, training may run on CPU if no CUDA GPU is available (slower,
+# but avoids a hard ``RuntimeError``). When ``False`` (default), training
+# **requires** a CUDA GPU and raises immediately if it is unavailable.
+ALLOW_CPU_TRAINING: bool = os.getenv(
+    "ALLOW_CPU_TRAINING", "false"
+).lower() in {"1", "true", "yes", "on"}
+
+# When ``True``, the dataset download step is skipped when a valid dataset
+# (containing a ``data.yaml``) already exists on disk. This avoids
+# re-downloading a large dataset on every run.
+SKIP_DOWNLOAD_IF_EXISTS: bool = os.getenv(
+    "SKIP_DOWNLOAD_IF_EXISTS", "false"
+).lower() in {"1", "true", "yes", "on"}
+
 # -----------------------------------------------------------------------------
 # Directory & File Paths
 # -----------------------------------------------------------------------------
@@ -132,4 +146,6 @@ if __name__ == "__main__":
     print(f"PATIENCE:              {PATIENCE}")
     print(f"IMAGE_SIZE:            {IMAGE_SIZE}")
     print(f"CONFIDENCE_THRESHOLD:  {CONFIDENCE_THRESHOLD}")
+    print(f"ALLOW_CPU_TRAINING:    {ALLOW_CPU_TRAINING}")
+    print(f"SKIP_DOWNLOAD_IF_EXISTS: {SKIP_DOWNLOAD_IF_EXISTS}")
 
