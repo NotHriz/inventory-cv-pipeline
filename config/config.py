@@ -41,10 +41,6 @@ ROBOFLOW_VERSION: int = int(os.getenv("ROBOFLOW_VERSION", "1"))
 # automatically by Ultralytics on first use).
 MODEL_TYPE: str = os.getenv("MODEL_TYPE", "yolov8n.pt")
 
-# Number of training epochs (legacy default; the training ceiling is
-# MAX_EPOCHS, and early stopping may cut training short).
-EPOCHS: int = int(os.getenv("EPOCHS", "50"))
-
 # Maximum number of training epochs (upper ceiling). Early stopping via
 # `patience` will terminate training early if validation stops improving.
 MAX_EPOCHS: int = int(os.getenv("MAX_EPOCHS", "300"))
@@ -132,7 +128,6 @@ if __name__ == "__main__":
     print(f"MODELS_DIR:            {MODELS_DIR}")
     print(f"EXPORTED_TFLITE_PATH:  {EXPORTED_TFLITE_PATH}")
     print(f"MODEL_TYPE:            {MODEL_TYPE}")
-    print(f"EPOCHS:                {EPOCHS}")
     print(f"MAX_EPOCHS:            {MAX_EPOCHS}")
     print(f"PATIENCE:              {PATIENCE}")
     print(f"IMAGE_SIZE:            {IMAGE_SIZE}")

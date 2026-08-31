@@ -28,26 +28,34 @@ except ImportError as exc:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 
-def _detect_device() -> str:
+def _enforce_cuda_device() -> str:
     """
-    Detect and return the best available compute device.
+    Verify CUDA is available and return the primary CUDA GPU device index.
 
-    This explicitly enforces GPU usage when a CUDA-capable GPU is present and
-    emits a clear warning if the runtime falls back to CPU.
+    This **enforces** GPU execution: if PyTorch cannot access a CUDA GPU, a
+    ``RuntimeError`` is raised immediately rather than silently falling back
+    to slow CPU training.
 
     Returns:
-        str: Either `0` (CUDA GPU) or `cpu`.
-    """
-    if torch.cuda.is_available():
-        logger.info("CUDA GPU detected. Training on device `0` (GPU).")
-        return "0"
+        str: The device string ``"0"`` targeting the primary CUDA GPU.
 
-    logger.warning(
-        "PyTorch did NOT detect a CUDA GPU. Falling back to CPU training - "
-        "this will be significantly slower. Verify your GPU drivers, CUDA "
-        "toolkit, and a PyTorch build with CUDA support are installed."
+    Raises:
+        RuntimeError: If CUDA is not available to PyTorch.
+    """
+    if not torch.cuda.is_available():
+        raise RuntimeError(
+            "CUDA is not available to PyTorch! Ensure PyTorch with CUDA "
+            "support is installed and NVIDIA drivers are active."
+        )
+
+    device = 0  # Target primary CUDA GPU (NVIDIA GTX 1660 Ti)
+    print(f"[INFO] Training on Device: {torch.cuda.get_device_name(device)}")
+    logger.info(
+        "CUDA GPU detected: %s. Training on device %d.",
+        torch.cuda.get_device_name(device),
+        device,
     )
-    return "cpu"
+    return str(device)
 
 
 def _resolve_export_format(model: YOLO) -> tuple[str, Path]:
@@ -167,9 +175,11 @@ def run_training_and_export(
         raise RuntimeError(f"Failed to load YOLO model `{model_weights}`: {exc}") from exc
 
     # -------------------------------------------------------------------------
-    # 3. Determine compute device
+    # 3. Enforce CUDA GPU execution
     # -------------------------------------------------------------------------
-    device: str = _detect_device()
+    # Strictly require CUDA; raising RuntimeError (not CPU fallback) ensures the
+    # user is immediately told if the GPU is unavailable.
+    device: str = _enforce_cuda_device()
 
     # -------------------------------------------------------------------------
     # 4. Train the model
