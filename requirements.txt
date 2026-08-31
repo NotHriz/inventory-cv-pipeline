@@ -24,3 +24,8 @@ tensorflow>=2.15.0
 
 # Web GUI for interactive image upload & testing
 gradio>=4.0.0
+
+# To convert weights to TensorFlow Lite format
+onnx>=1.14.0
+onnx2tf>=1.17.0
+onnxruntime>=1.15.0
