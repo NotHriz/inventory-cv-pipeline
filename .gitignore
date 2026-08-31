@@ -26,8 +26,9 @@ dataset/*
 runs/
 
 # Model weights and exports
-# Ignore trained weights and saved-model directories but keep the placeholder.
-models/*.pt
+# Ignore PyTorch weights anywhere (incl. auto-downloaded base models like
+# yolov8n.pt in the project root), trained weights, and saved-model directories.
+*.pt
 models/*_saved_model/
 !models/.gitkeep
 
