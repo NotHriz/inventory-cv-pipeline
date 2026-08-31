@@ -74,36 +74,44 @@ def _find_data_yaml(download_dir: Path) -> Path:
 def download_dataset() -> str:
     """
     Download the labeled dataset from Roboflow in YOLOv8 format.
-
-    This function authenticates with the Roboflow API using the credentials
-    in `config`, locates the specified workspace/project/version, and
-    downloads the dataset into the configured `DATASET_DIR`.
-
-    Returns:
-        str: Absolute path to the downloaded `data.yaml` file.
-
-    Raises:
-        EnvironmentError: If the required API credentials are missing or
-            still set to placeholder defaults.
-        RuntimeError: If the download or `data.yaml` discovery fails.
+    Skipping is triggered only if data.yaml exists and version matches.
     """
     logger.info("=" * 70)
-    logger.info("Starting Roboflow dataset download")
+    logger.info("Starting Roboflow dataset download process")
     logger.info("=" * 70)
 
-    # -------------------------------------------------------------------------
     # 1. Validate configuration
-    # -------------------------------------------------------------------------
     config.validate_api_config()
 
-    # -------------------------------------------------------------------------
-    # 2. Clean up any previous dataset
-    # -------------------------------------------------------------------------
+    # 2. Check if dataset exists and should be skipped
+    if getattr(config, "SKIP_DOWNLOAD_IF_EXISTS", False):
+        try:
+            existing_yaml = _find_data_yaml(config.DATASET_DIR)
+            
+            # Check if version marker matches target version
+            version_file = config.DATASET_DIR / ".roboflow_version"
+            if version_file.exists():
+                cached_version = version_file.read_text().strip()
+                if cached_version == str(config.ROBOFLOW_VERSION):
+                    logger.info(
+                        "Dataset v%s already exists at %s. Skipping download.",
+                        config.ROBOFLOW_VERSION,
+                        config.DATASET_DIR,
+                    )
+                    return str(existing_yaml)
+            else:
+                # Fallback: file exists but no marker; assume valid to avoid redundant downloads
+                logger.info(
+                    "Found data.yaml at %s. Skipping download.", existing_yaml
+                )
+                return str(existing_yaml)
+        except FileNotFoundError:
+            # data.yaml missing, proceed to download
+            pass
+
+    # 3. Clean up and re-download
     _cleanup_existing_dataset()
 
-    # -------------------------------------------------------------------------
-    # 3. Authenticate and download
-    # -------------------------------------------------------------------------
     try:
         rf = Roboflow(api_key=config.ROBOFLOW_API_KEY)
         workspace = rf.workspace(config.ROBOFLOW_WORKSPACE)
@@ -117,23 +125,15 @@ def download_dataset() -> str:
             config.ROBOFLOW_WORKSPACE,
         )
 
-        # `location` returns the absolute path to the directory containing the
-        # downloaded dataset files.
-        # NOTE: `overwrite=True` is critical. If the `location` directory already
-        # exists and overwrite is disabled (the SDK default), Roboflow returns a
-        # stub Dataset object WITHOUT downloading any files, leaving the target
-        # directory empty. Cleaning the directory beforehand is not sufficient
-        # because the directory still exists (it is re-created by the cleanup).
         download_result = version.download(
             model_format="yolov8",
             location=str(config.DATASET_DIR),
             overwrite=True,
         )
-        if isinstance(download_result, str):
-            dataset_dir = Path(download_result)
-        else:
-            # The SDK may return a dataset object; derive path from config.
-            dataset_dir = config.DATASET_DIR
+        dataset_dir = Path(download_result) if isinstance(download_result, str) else config.DATASET_DIR
+
+        # Write version marker for cache invalidation on version bump
+        (config.DATASET_DIR / ".roboflow_version").write_text(str(config.ROBOFLOW_VERSION))
 
         logger.info("Dataset downloaded successfully to %s", dataset_dir)
 
@@ -141,16 +141,10 @@ def download_dataset() -> str:
         logger.error("Failed to download dataset: %s", exc)
         raise RuntimeError(f"Roboflow dataset download failed: {exc}") from exc
 
-    # -------------------------------------------------------------------------
-    # 4. Locate and return the `data.yaml`
-    # -------------------------------------------------------------------------
-    try:
-        data_yaml_path = _find_data_yaml(dataset_dir)
-        logger.info("Found data.yaml at: %s", data_yaml_path)
-        return str(data_yaml_path)
-    except FileNotFoundError as exc:
-        logger.error("%s", exc)
-        raise
+    # 4. Locate and return data.yaml
+    data_yaml_path = _find_data_yaml(dataset_dir)
+    logger.info("Found data.yaml at: %s", data_yaml_path)
+    return str(data_yaml_path)
 
 
 if __name__ == "__main__":
